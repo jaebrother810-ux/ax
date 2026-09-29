@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스킬 기반 시스템 소개 외부서버</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f3ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            glow: '#818cf8',
+                        },
+                        dark: {
+                            bg: '#0a0d14',
+                            card: 'rgba(18, 24, 38, 0.75)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Pretendard', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS Styles -->
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        
+        body {
+            font-family: 'Pretendard', 'Inter', sans-serif;
+            background-color: #0a0d14;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .glow-bg {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.25;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Glassmorphism Effect */
+        .glass-panel {
+            background: rgba(18, 24, 38, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .glass-card {
+            background: rgba(26, 34, 52, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+        }
+
+        /* Neon Border Gradient Overlay */
+        .video-wrapper {
+            position: relative;
+            border-radius: 1.25rem;
+            padding: 2px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.6), rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.2));
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.25);
+        }
+
+        /* Toast Message Container */
+        #toast {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen relative flex flex-col justify-between">
+
+    <!-- Ambient Background Lighting Effects -->
+    <div class="glow-bg w-[500px] h-[500px] bg-indigo-600 top-[-100px] left-[-100px] animate-pulse-slow"></div>
+    <div class="glow-bg w-[600px] h-[600px] bg-purple-600 top-[30%] right-[-150px] animate-pulse-slow" style="animation-delay: 2s;"></div>
+    <div class="glow-bg w-[400px] h-[400px] bg-pink-600 bottom-[-50px] left-[20%] animate-pulse-slow" style="animation-delay: 1s;"></div>
+
+    <!-- Navigation Header -->
+    <header class="relative z-10 w-full border-b border-white/5 bg-dark-bg/60 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-server text-white text-lg"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-200 to-gray-400">
+                        EXTERNAL SERVER
+                    </span>
+                    <span class="block text-xs text-indigo-400 font-mono tracking-wider uppercase">Skill-Based Infrastructure</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="copyCurrentUrl()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-medium bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white transition-all flex items-center space-x-2">
+                    <i class="fa-regular fa-share-from-square"></i>
+                    <span>공유하기</span>
+                </button>
+                <div class="h-4 w-[1px] bg-white/10 hidden sm:block"></div>
+                <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+                    SERVER ONLINE
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-16 flex-grow flex flex-col items-center">
+        
+        <!-- Header Text Block -->
+        <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+            <div class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 mb-4 animate-float">
+                <i class="fa-solid fa-sparkles mr-2 text-indigo-400"></i>
+                스킬 데이터베이스 연결 완료
+            </div>
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight sm:leading-tight mb-4">
+                스킬 기반 시스템 소개 외부서버
+            </h1>
+            <p class="text-base sm:text-lg text-gray-400 font-normal leading-relaxed">
+                차세대 외부 서버 연결을 통한 실시간 스킬 매핑 및 AI 기반 데이터 분석 데모 영상입니다. 아래 플레이어를 통해 주요 시스템 구동 모습을 확인하세요.
+            </p>
+        </div>
+
+        <!-- Central Video Section -->
+        <div class="w-full max-w-4xl mb-16">
+            <div class="video-wrapper">
+                <div class="glass-panel rounded-[1.15rem] overflow-hidden">
+                    
+                    <!-- Video Top Bar Info -->
+                    <div class="px-5 py-3.5 border-b border-white/5 flex items-center justify-between bg-black/20">
+                        <div class="flex items-center space-x-2 text-xs font-mono text-gray-400">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span>
+                            <span class="ml-2 text-gray-300">260929_ax.mp4</span>
+                        </div>
+                        <div class="text-xs text-indigo-400 font-mono">
+                            <i class="fa-solid fa-film mr-1"></i> HD 1080p
+                        </div>
+                    </div>
+
+                    <!-- Video Container -->
+                    <div class="relative bg-black/80 aspect-video flex items-center justify-center group">
+                        <!-- Video Tag Pointing to 260929_ax.mp4 -->
+                        <video 
+                            id="mainVideo"
+                            src="260929_ax.mp4" 
+                            controls 
+                            autoplay 
+                            muted 
+                            loop 
+                            playsinline
+                            class="w-full h-full object-contain focus:outline-none"
+                            onerror="handleVideoError()"
+                        >
+                            <p class="text-gray-400 text-sm">사용자의 브라우저가 비디오 태그를 지원하지 않습니다.</p>
+                        </video>
+
+                        <!-- Fallback Alert Box (Shown only if video fails to load) -->
+                        <div id="videoErrorOverlay" class="hidden absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-20">
+                            <div class="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mb-4 text-indigo-400 text-2xl">
+                                <i class="fa-solid fa-file-video"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-white mb-1">동영상 파일을 로드할 수 없습니다</h3>
+                            <p class="text-sm text-gray-400 max-w-md mb-4">
+                                HTML 파일과 동일한 폴더에 <code class="bg-indigo-950 text-indigo-300 px-2 py-0.5 rounded font-mono text-xs">260929_ax.mp4</code> 파일이 위치해 있는지 확인해주세요.
+                            </p>
+                            <button onclick="reloadVideo()" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all shadow-lg shadow-indigo-600/30">
+                                <i class="fa-solid fa-rotate-right mr-1.5"></i> 다시 시도
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Video Bottom Bar Actions -->
+                    <div class="px-6 py-4 bg-black/30 border-t border-white/5 flex flex-wrap items-center justify-between gap-4 text-xs text-gray-400">
+                        <div class="flex items-center space-x-4">
+                            <span class="flex items-center">
+                                <i class="fa-solid fa-bolt text-indigo-400 mr-1.5"></i> 대역폭 optimzed
+                            </span>
+                            <span class="flex items-center">
+                                <i class="fa-solid fa-lock text-emerald-400 mr-1.5"></i> 보안 스트리밍
+                            </span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <button onclick="toggleFullscreen()" class="hover:text-white transition-colors flex items-center">
+                                <i class="fa-solid fa-expand mr-1"></i> 전체화면
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Features Grid Section -->
+        <div class="w-full">
+            <h2 class="text-xl sm:text-2xl font-bold text-white text-center mb-8 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-cubes text-indigo-400"></i>
+                <span>외부 서버 스킬 시스템 핵심 기능</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Feature 1 -->
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 text-xl mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300">
+                        <i class="fa-solid fa-diagram-project"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">실시간 스킬 매핑</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        외부 데이터베이스와 연동되어 사용자 및 캐릭터 스킬 트리 트랜잭션을 실시간으로 처리하고 갱신합니다.
+                    </p>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 text-xl mb-4 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">AI 노드 연산 분산</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        복잡한 스킬 데미지 및 보정치 계산을 전용 외부 서버 노드에서 처리하여 클라이언트의 부하를 최소화합니다.
+                    </p>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="glass-card rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 text-xl mb-4 group-hover:bg-pink-600 group-hover:text-white transition-all duration-300">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">무결성 검증 로직</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        모든 스킬 발동 요청을 외부 서버 검증 레이어에서 암호화하여 부정 요청 및 변조를 원천 차단합니다.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 border-t border-white/5 py-8 bg-dark-bg/80 backdrop-blur-md mt-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 gap-4">
+            <div>
+                <p>&copy; 2026 Skill-Based External Server Project. All rights reserved.</p>
+            </div>
+            <div class="flex items-center space-x-6">
+                <span class="hover:text-gray-400 cursor-pointer transition-colors">문서 보기</span>
+                <span class="hover:text-gray-400 cursor-pointer transition-colors">시스템 상태</span>
+                <span class="hover:text-gray-400 cursor-pointer transition-colors">문의하기</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-10 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="glass-panel px-5 py-3.5 rounded-xl flex items-center space-x-3 text-sm text-white shadow-2xl border border-indigo-500/30">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+            <span id="toastMessage">링크가 클립보드에 복사되었습니다!</span>
+        </div>
+    </div>
+
+    <!-- Client Scripts -->
+    <script>
+        // Copy URL functionality
+        function copyCurrentUrl() {
+            const tempInput = document.createElement('input');
+            tempInput.value = window.location.href;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast('페이지 링크가 복사되었습니다!');
+            } catch (err) {
+                showToast('링크 복사에 실패했습니다.');
+            }
+            document.body.removeChild(tempInput);
+        }
+
+        // Show toast notification
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMessage');
+            
+            toastMsg.textContent = message;
+            toast.classList.remove('translate-y-10', 'opacity-0', 'pointer-events-none');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // Handle Video Load Error
+        function handleVideoError() {
+            const overlay = document.getElementById('videoErrorOverlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        // Reload Video Retry
+        function reloadVideo() {
+            const video = document.getElementById('mainVideo');
+            const overlay = document.getElementById('videoErrorOverlay');
+            if (video && overlay) {
+                overlay.classList.add('hidden');
+                video.load();
+                video.play().catch(() => {});
+            }
+        }
+
+        // Toggle Fullscreen Functionality
+        function toggleFullscreen() {
+            const video = document.getElementById('mainVideo');
+            if (video) {
+                if (video.requestFullscreen) {
+                    video.requestFullscreen();
+                } else if (video.webkitRequestFullscreen) {
+                    video.webkitRequestFullscreen();
+                } else if (video.msRequestFullscreen) {
+                    video.msRequestFullscreen();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
